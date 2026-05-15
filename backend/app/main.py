@@ -9,6 +9,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.core.database import AsyncSessionLocal
+from app.routers.detection import router as detection_router
+from app.routers.insights import router as insights_router
 from app.worker import create_scheduler
 from integrations.ghl.webhook import router as ghl_router
 
@@ -29,6 +31,8 @@ app = FastAPI(
 )
 
 app.include_router(ghl_router)
+app.include_router(detection_router)
+app.include_router(insights_router)
 
 
 @app.get("/", tags=["meta"])

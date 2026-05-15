@@ -7,40 +7,46 @@ revenue-recovery-kit is a three-tier web application backed by a Supabase-manage
 ## System Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  External                                                        │
-│                                                                  │
-│  ┌──────────────┐   ┌─────────┐   ┌────────┐   ┌────────────┐  │
-│  │  Go High     │   │ Resend  │   │ Twilio │   │ Anthropic  │  │
-│  │  Level (GHL) │   │ (email) │   │ (SMS)  │   │ Claude API │  │
-│  └──────┬───────┘   └────▲────┘   └───▲────┘   └─────▲──────┘  │
-│         │ webhooks        │ alerts     │ alerts        │ prompts  │
-└─────────┼────────────────┼────────────┼───────────────┼─────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  External                                                             │
+│                                                                       │
+│  ┌──────────────┐   ┌─────────┐   ┌────────┐   ┌────────────┐       │
+│  │  Go High     │   │ Resend  │   │ Twilio │   │ Anthropic  │       │
+│  │  Level (GHL) │   │ (email) │   │ (SMS)  │   │ Claude API │       │
+│  └──────┬───────┘   └────▲────┘   └───▲────┘   └─────▲──────┘       │
+│         │ webhooks        │ alerts     │ alerts        │ prompts      │
+└─────────┼────────────────┼────────────┼───────────────┼──────────────┘
           │                │            │               │
-┌─────────▼────────────────┼────────────┼───────────────┼─────────┐
-│  API (FastAPI :8000)     │            │               │          │
-│                          │            │               │          │
-│  ┌──────────────┐  ┌─────┴──────┐  ┌─┴────────────┐  │          │
-│  │ Webhook      │  │  Resend    │  │  Twilio      │  │          │
-│  │ Handler      │  │  Adapter   │  │  Adapter     │  │          │
-│  └──────┬───────┘  └────────────┘  └──────────────┘  │          │
-│         │                                              │          │
-│  ┌──────▼───────┐  ┌────────────┐  ┌──────────────┐  │          │
-│  │  Dedup       │  │  Sequence  │  │  Claude      ◄──┘          │
-│  │  Engine      │  │  Engine    │  │  Insights    │             │
-│  └──────┬───────┘  └─────▲──────┘  └──────┬───────┘             │
-│         │                │                 │                      │
-└─────────┼────────────────┼─────────────────┼──────────────────────┘
-          │                │                 │
-┌─────────▼────────────────┴─────────────────▼──────────────────────┐
-│  Supabase (Postgres 16 + Auth + RLS)                               │
-│  contacts │ invoices │ payment_events │ sequences │ insights        │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────▼────────────────┼────────────┼───────────────┼──────────────┐
+│  API (FastAPI :8000)     │            │               │               │
+│                          │            │               │               │
+│  ┌──────────────┐  ┌─────┴──────┐  ┌─┴────────────┐  │               │
+│  │ GHL Webhook  │  │  Resend    │  │  Twilio      │  │               │
+│  │ Handler      │  │  Adapter   │  │  Adapter     │  │               │
+│  └──────┬───────┘  └────────────┘  └──────────────┘  │               │
+│         │                                              │               │
+│  ┌──────▼───────┐  ┌────────────┐  ┌──────────────┐  │               │
+│  │  Dedup       │  │  Detection │  │  Claude      ◄──┘               │
+│  │  Engine      │  │  Engine    │  │  Insights    │                  │
+│  └──────┬───────┘  └─────┬──────┘  └──────┬───────┘                  │
+│         │                │                 │                           │
+│  ┌──────▼───────┐  ┌─────▼──────┐         │                           │
+│  │  Sequence    │  │  Detection │         │                           │
+│  │  Engine      │  │  Rules     │         │                           │
+│  │  (worker)    │  │  REGISTRY  │         │                           │
+│  └──────────────┘  └────────────┘         │                           │
+│                                            │                           │
+└────────────────────────────────────────────┼───────────────────────────┘
+                                             │
+┌────────────────────────────────────────────▼───────────────────────────┐
+│  Supabase (Postgres 16 + Auth + RLS)                                    │
+│  contacts │ invoices │ sequences │ detection_runs │ detections │ insights│
+└─────────────────────────────────────────────────────────────────────────┘
           ▲
-┌─────────┴──────────────────────────────────────────────────────────┐
-│  Frontend (Next.js 14 :3000)                                        │
-│  AR dashboard │ recovery sequences │ contact health │ insights      │
-└────────────────────────────────────────────────────────────────────┘
+┌─────────┴────────────────────────────────────────────────────────────┐
+│  Frontend (Next.js 14 :3000)                                          │
+│  AR dashboard │ recovery sequences │ contact health │ insights        │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow: GHL Failed-Payment Webhook
@@ -75,9 +81,13 @@ Given a contact payload from GHL, queries the contacts table for existing record
 
 Drives the recovery timeline for overdue invoices and failed recurring charges. Sequences are stored as rows in the `sequences` table with a step index and a scheduled-at timestamp. A background worker (Celery or APScheduler — decided on Day 2) polls for due steps and executes them by calling the Resend or Twilio adapters.
 
+### Detection Engine
+
+Declarative rule engine that identifies revenue recovery opportunities. On demand (POST `/v1/detection/run`), the engine iterates a `REGISTRY` of rule objects, calls each rule's `find(session, org_id)` method, and bulk-inserts all `Detection` rows in a single transaction alongside a `DetectionRun` audit record. The initial rule set covers four signals: `stalled_invoice` (HIGH), `stale_lead` (MEDIUM), `recovery_candidate` (HIGH), and `sequence_eligible` (LOW). Adding a rule requires creating one file and appending one entry to the registry — no other code changes. See ADR-0003 for the design rationale.
+
 ### Claude Insights
 
-Calls the Anthropic API (Claude Sonnet) with a structured prompt containing a contact's payment history, sequence state, and any available context notes. Returns a short prose summary and a recommended next action. Results are stored in the `insights` table and surfaced on the dashboard. API key is `ANTHROPIC_API_KEY`.
+Calls the Anthropic Claude API with a structured JSON payload summarising a `DetectionRun` (total at-risk, rule counts, per-detection detail). Returns a 3-paragraph prose executive briefing stored in the `insights` table alongside the raw `input_payload` for auditability. Triggered via POST `/v1/insights`. Token counts and cost are persisted per call. The `AnthropicAdapter` wraps the SDK with retry on 429/5xx and sanitised logging (no key, no full prompt — only a hash and token counts). See ADR-0004 for prompt strategy.
 
 ### Resend Adapter
 
