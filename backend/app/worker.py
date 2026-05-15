@@ -35,63 +35,67 @@ async def execute_due_steps(sessionmaker: async_sessionmaker) -> None:
 
         for step in due_steps:
             try:
-                # Load the related Contact (needed for email address / phone number).
-                result = await session.execute(
-                    sa.select(Contact).where(Contact.id == step.contact_id)
-                )
-                contact = result.scalar_one_or_none()
+                async with session.begin_nested():   # savepoint per step
+                    result = await session.execute(
+                        sa.select(Contact).where(Contact.id == step.contact_id)
+                    )
+                    contact = result.scalar_one_or_none()
 
-                if contact is None:
-                    logger.error(
-                        "sequence_id=%s: contact %s not found — marking failed",
-                        step.id,
-                        step.contact_id,
-                    )
-                    await mark_step_failed(session, step.id)
-                    continue
+                    if contact is None:
+                        logger.error(
+                            "sequence_id=%s: contact %s not found — marking failed",
+                            step.id,
+                            step.contact_id,
+                        )
+                        await mark_step_failed(session, step.id)
+                        continue
 
-                recovery_message = (
-                    f"Hi {contact.full_name or 'there'}, you have an outstanding "
-                    "balance. Please contact us to resolve your account."
-                )
-                if step.channel == "email":
-                    await send_recovery_email(
-                        to_email=contact.email or "",
-                        contact_name=contact.full_name or "",
-                        message=recovery_message,
+                    recovery_message = (
+                        f"Hi {contact.full_name or 'there'}, you have an outstanding "
+                        "balance. Please contact us to resolve your account."
                     )
-                elif step.channel == "sms":
-                    await send_recovery_sms(
-                        to_number=contact.phone or "",
-                        message=recovery_message,
-                    )
-                else:
-                    logger.warning(
-                        "sequence_id=%s: unknown channel '%s' — skipping",
-                        step.id,
-                        step.channel,
-                    )
-                    continue
+                    if step.channel == "email":
+                        await send_recovery_email(
+                            to_email=contact.email or "",
+                            contact_name=contact.full_name or "",
+                            message=recovery_message,
+                        )
+                    elif step.channel == "sms":
+                        await send_recovery_sms(
+                            to_number=contact.phone or "",
+                            message=recovery_message,
+                        )
+                    else:
+                        logger.warning(
+                            "sequence_id=%s: unknown channel '%s' — skipping",
+                            step.id,
+                            step.channel,
+                        )
+                        continue
 
-                await mark_step_sent(session, step.id)
-                logger.info(
-                    "sequence_id=%s channel=%s — sent", step.id, step.channel
-                )
+                    await mark_step_sent(session, step.id)
+                    logger.info("sequence_id=%s channel=%s — sent", step.id, step.channel)
 
             except Exception:
                 logger.exception(
-                    "sequence_id=%s channel=%s — failed, marking as failed and continuing",
+                    "sequence_id=%s channel=%s — failed, rolling back step and continuing",
                     step.id,
                     step.channel,
                 )
+                # Savepoint was automatically rolled back by the context manager.
+                # Attempt to mark the step failed in a fresh nested transaction.
                 try:
-                    await mark_step_failed(session, step.id)
+                    async with session.begin_nested():
+                        await mark_step_failed(session, step.id)
                 except Exception:
-                    logger.exception(
-                        "sequence_id=%s — could not mark_step_failed", step.id
-                    )
+                    logger.exception("sequence_id=%s — could not mark_step_failed", step.id)
 
-        await session.commit()
+        # Commit all savepoints to the database.
+        try:
+            await session.commit()
+        except Exception:
+            logger.exception("worker: session.commit() failed — rolling back entire batch")
+            await session.rollback()
 
 
 def create_scheduler(sessionmaker: async_sessionmaker) -> AsyncIOScheduler:

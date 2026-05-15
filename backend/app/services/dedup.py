@@ -1,10 +1,19 @@
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func as _func
 
 from app.models.contact import Contact
 from app.models.invoice import Invoice
 from integrations.ghl.models import ContactPayload, InvoicePayload
+
+
+# ---------------------------------------------------------------------------
+# Helper — server-side now() expression
+# ---------------------------------------------------------------------------
+
+def sa_now():
+    return _func.now()
 
 
 async def upsert_contact(session: AsyncSession, payload: ContactPayload) -> Contact:
@@ -30,7 +39,6 @@ async def upsert_contact(session: AsyncSession, payload: ContactPayload) -> Cont
         )
     )
     await session.execute(stmt)
-    await session.commit()
 
     result = await session.execute(
         select(Contact).where(Contact.ghl_contact_id == payload.ghl_contact_id)
@@ -70,20 +78,8 @@ async def upsert_invoice(session: AsyncSession, payload: InvoicePayload) -> Invo
         )
     )
     await session.execute(stmt)
-    await session.commit()
 
     result = await session.execute(
         select(Invoice).where(Invoice.ghl_invoice_id == payload.ghl_invoice_id)
     )
     return result.scalar_one()
-
-
-# ---------------------------------------------------------------------------
-# Helper — server-side now() expression
-# ---------------------------------------------------------------------------
-
-from sqlalchemy.sql import func as _func
-
-
-def sa_now():
-    return _func.now()

@@ -4,6 +4,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import ValidationError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -32,7 +33,7 @@ async def receive_webhook(
         raise HTTPException(status_code=401, detail="Missing or unconfigured webhook signature")
 
     # 3. Compute expected signature with timing-safe comparison.
-    expected_sig = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    expected_sig = hmac.new(key=secret.encode(), msg=body, digestmod=hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected_sig, received_sig):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
@@ -55,6 +56,13 @@ async def receive_webhook(
 
         else:
             logger.info("Unknown GHL event type: %s", event_type)
+
+        try:
+            await session.commit()
+        except SQLAlchemyError:
+            await session.rollback()
+            logger.exception("webhook: session.commit() failed — rolled back")
+            raise HTTPException(status_code=503, detail="Database error — please retry")
 
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=exc.errors())
