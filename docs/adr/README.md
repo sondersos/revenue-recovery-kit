@@ -1,0 +1,10 @@
+# Architecture Decision Records
+
+| # | Title | Status |
+|---|---|---|
+| [0001](0001-tech-stack.md) | Tech stack — Python + Next.js + Supabase | Accepted |
+| [0002](0002-ghl-schema.md) | GHL schema — contacts + invoices + sequences | Accepted |
+| [0003](0003-detection-rule-engine.md) | Detection rule engine — declarative registry | Accepted |
+| [0004](0004-claude-insights-prompt-strategy.md) | Claude insights — single-shot structured prompt | Accepted |
+| [0005](0005-frontend-architecture.md) | Frontend — Next.js 14 App Router, Server Components | Accepted |
+| [0006](0006-auth-flow.md) | Auth — Supabase Auth + JWT pass-through to FastAPI | Accepted |

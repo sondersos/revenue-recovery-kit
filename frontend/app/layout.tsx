@@ -1,10 +1,9 @@
-import type { Metadata } from "next"
-
-// globals.css (Tailwind base styles) will be added on Day 5
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "revenue-recovery-kit",
-  description: "Automated revenue recovery dashboard for service agencies.",
+  title: 'Revenue Recovery Kit',
+  description: 'Automated revenue recovery for service agencies',
 }
 
 export default function RootLayout({
@@ -14,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-gray-50 text-gray-900 antialiased">{children}</body>
     </html>
   )
 }

@@ -7,7 +7,9 @@ Architecture overview: docs/ARCHITECTURE.md
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.routers.detection import router as detection_router
 from app.routers.insights import router as insights_router
@@ -28,6 +30,14 @@ app = FastAPI(
     description="Automated revenue recovery for service agencies on Go High Level.",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.FRONTEND_ORIGIN],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(ghl_router)

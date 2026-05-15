@@ -44,8 +44,22 @@ revenue-recovery-kit is a three-tier web application backed by a Supabase-manage
 └─────────────────────────────────────────────────────────────────────────┘
           ▲
 ┌─────────┴────────────────────────────────────────────────────────────┐
+│  Supabase Auth boundary                                               │
+│  JWT issued here, verified by FastAPI (SUPABASE_JWT_SECRET / HS256)  │
+└──────────┬───────────────────────────────────────────────────────────┘
+           │ httpOnly cookie (@supabase/ssr)
+┌──────────▼───────────────────────────────────────────────────────────┐
 │  Frontend (Next.js 14 :3000)                                          │
-│  AR dashboard │ recovery sequences │ contact health │ insights        │
+│                                                                       │
+│  Server Components (default):                                         │
+│    layout.tsx │ dashboard/page.tsx │ InsightCard │ KpiRow            │
+│    TopDetectionsTable │ lib/api-server.ts (fetch + Bearer token)      │
+│                                                                       │
+│  Client Components ("use client"):                                    │
+│    RunScanButton │ DetectionsByRuleChart (Tremor) │ LoginForm         │
+│    LogoutButton                                                       │
+│                                                                       │
+│  Middleware: guards /dashboard/* → /login if no session               │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,7 +117,7 @@ Postgres 16 managed by Supabase. Row-Level Security is enabled on all tables so 
 
 ### Frontend (Next.js 14)
 
-App Router-based dashboard. Reads data from the FastAPI backend via `NEXT_PUBLIC_API_URL`. Uses Tremor for chart and stat-card components and TailwindCSS for layout. No server-side business logic — all data mutations go through the API.
+App Router dashboard with Supabase Auth. Server Components by default — only four components are Client Components: `RunScanButton` (onClick + loading state), `DetectionsByRuleChart` (Tremor/Recharts requires browser), `LoginForm` (form state + Supabase browser client), and `LogoutButton`. Server Components fetch from the FastAPI backend via `lib/api-server.ts`, which extracts the Supabase JWT from the session cookie and attaches it as a Bearer token. `middleware.ts` guards `/dashboard/*` and redirects unauthenticated requests to `/login`. See ADR-0005 for the frontend architecture rationale and ADR-0006 for the auth flow.
 
 ### n8n Integration Adapter
 

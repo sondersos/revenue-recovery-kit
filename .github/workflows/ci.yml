@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test:
+  backend-test:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -50,4 +50,37 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/revenue_recovery
           ANTHROPIC_API_KEY: ""
           GHL_WEBHOOK_SECRET: "test-secret"
+          SUPABASE_JWT_SECRET: "test-jwt-secret-32-chars-exactly!!"
         run: python -m pytest tests/ -q --tb=short
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Unit tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Build
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+        run: npm run build
