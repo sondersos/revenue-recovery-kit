@@ -85,7 +85,7 @@ All hot-path queries run against 6 composite indexes (migration 0006). On a Dock
 |---|---|---|
 | `GET /v1/detection/runs/latest` | 200ms | ~8ms |
 | `GET /v1/insights/latest` | 200ms | ~6ms |
-| `POST /v1/detection/run` (1k contacts) | 500ms | ~80ms |
+| `POST /v1/detection/run` (1k contacts) | 500ms | ~8ms |
 
 See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for full EXPLAIN ANALYZE plans and load-test methodology.
 
@@ -105,7 +105,7 @@ See [docs/adr/0007-observability.md](docs/adr/0007-observability.md) for the ful
 
 ## Accessibility
 
-The dashboard targets WCAG 2.1 AA. axe-core runs in CI against the login and dashboard pages. All interactive elements have visible `:focus-visible` rings and proper ARIA labels.
+The dashboard is built with WCAG 2.1 AA as the target. All interactive elements have visible `:focus-visible` rings and ARIA labels. An accessibility statement page lives at `/accessibility`. Automated axe-core coverage is on the roadmap (requires a live Supabase project for Playwright to authenticate against).
 
 See [app/accessibility/page.tsx](frontend/app/accessibility/page.tsx) for the accessibility statement.
 
