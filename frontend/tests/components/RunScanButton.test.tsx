@@ -62,7 +62,17 @@ describe('RunScanButton', () => {
       total_at_risk_usd: 0,
       detection_count: 0,
     })
-    mockInsight.mockResolvedValue({} as Parameters<typeof mockInsight>[0] extends infer T ? T : never)
+    mockInsight.mockResolvedValue({
+      id: 'ins-1',
+      detection_run_id: 'run-999',
+      organization_id: 'org-1',
+      summary_text: 'ok',
+      cost_usd: null,
+      generated_at: '2026-01-01T00:00:00Z',
+      input_tokens: null,
+      output_tokens: null,
+      model: 'claude-test',
+    })
 
     render(<RunScanButton />)
     fireEvent.click(screen.getByRole('button'))

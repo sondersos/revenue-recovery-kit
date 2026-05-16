@@ -10,7 +10,7 @@ from alembic import context
 # autogenerate or migration run.
 # ---------------------------------------------------------------------------
 from app.models.base import Base  # noqa: F401
-from app.models import contact, invoice  # noqa: F401
+from app.models import contact, invoice, sequence, detection  # noqa: F401
 
 # ---------------------------------------------------------------------------
 # Alembic Config object — gives access to values in alembic.ini.
@@ -59,7 +59,15 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode (live DB connection)."""
+    """Run migrations in 'online' mode (live DB connection).
+
+    Migrations that set ``transaction_per_migration = True`` on their module
+    will each run in their own transaction.  Migrations that need to run
+    outside *any* transaction (e.g. ``CREATE INDEX CONCURRENTLY``) should set
+    ``transactional_ddl = False`` on their module instead — the runner will
+    call ``connection.execution_options(isolation_level="AUTOCOMMIT")`` for
+    those migrations only.
+    """
     sync_url = _get_sync_url()
 
     # Override the URL that alembic.ini may have provided.
@@ -76,6 +84,9 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            # Honour per-migration transactional_ddl = False declarations so
+            # that CREATE INDEX CONCURRENTLY can run outside a transaction.
+            transaction_per_migration=True,
         )
 
         with context.begin_transaction():

@@ -113,5 +113,7 @@ def create_scheduler(sessionmaker: async_sessionmaker) -> AsyncIOScheduler:
         args=[sessionmaker],
         id="execute_due_steps",
         replace_existing=True,
+        max_instances=1,     # prevent concurrent runs if a batch takes >60s
+        misfire_grace_time=10,  # discard fires missed by more than 10s
     )
     return scheduler
