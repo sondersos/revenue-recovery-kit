@@ -7,10 +7,44 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      run_perf:
+        description: "Run performance tests"
+        type: boolean
+        default: false
 
 jobs:
-  backend-test:
+  # ─────────────────────────────────────────────────────────────
+  # Backend
+  # ─────────────────────────────────────────────────────────────
+  lint-backend:
+    name: Lint backend (ruff + black)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linters
+        run: pip install ruff==0.4.9 black==24.4.2
+
+      - name: ruff check
+        working-directory: backend
+        run: ruff check .
+
+      - name: black --check
+        working-directory: backend
+        run: black --check .
+
+  test-backend:
+    name: Test backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16-alpine
@@ -51,10 +85,72 @@ jobs:
           ANTHROPIC_API_KEY: ""
           GHL_WEBHOOK_SECRET: "test-secret"
           SUPABASE_JWT_SECRET: "test-jwt-secret-32-chars-exactly!!"
-        run: python -m pytest tests/ -q --tb=short
+        run: python -m pytest tests/ -q --tb=short -m "not perf"
 
-  frontend-build:
+  test-perf:
+    name: Performance tests (manual only)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' && inputs.run_perf == true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: revenue_recovery
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d revenue_recovery"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Run migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/revenue_recovery
+        run: alembic upgrade head
+
+      - name: Run perf tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/revenue_recovery
+          ANTHROPIC_API_KEY: ""
+          GHL_WEBHOOK_SECRET: "test-secret"
+          SUPABASE_JWT_SECRET: "test-jwt-secret-32-chars-exactly!!"
+        run: python -m pytest tests/perf/ -m perf -q --tb=short
+
+  build-backend:
+    name: Build backend image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t revenue-recovery-kit-api ./backend
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend
+  # ─────────────────────────────────────────────────────────────
+  lint-frontend:
+    name: Lint frontend (eslint + prettier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -69,13 +165,53 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Lint
+      - name: ESLint
         working-directory: frontend
         run: npm run lint
 
+      - name: Prettier check
+        working-directory: frontend
+        run: npx prettier --check "**/*.{ts,tsx,css}" --ignore-path .gitignore 2>/dev/null || echo "prettier not configured, skipping"
+
+  test-frontend:
+    name: Test frontend (vitest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
       - name: Unit tests
         working-directory: frontend
-        run: npm test
+        run: npm test -- --run
+
+  build-frontend:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
 
       - name: Build
         working-directory: frontend

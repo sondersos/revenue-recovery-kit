@@ -1,3 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "perf: performance budget tests (deselect with '-m not perf')",
+]

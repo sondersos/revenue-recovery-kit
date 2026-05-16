@@ -43,3 +43,11 @@ export interface Insight {
   output_tokens: number | null
   model: string
 }
+
+export interface CostSummary {
+  total_cost_usd: number
+  generation_count: number
+  avg_cost_usd: number
+  since: string | null
+  by_model: Record<string, number>
+}

@@ -26,9 +26,10 @@ export default function InsightCard({ insight }: Props) {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
           Latest Insight
         </h2>
-        <p className="text-gray-400 italic text-sm">
-          No insight yet. Click &ldquo;Run scan&rdquo; below to generate one.
-        </p>
+        <div className="p-6 text-center space-y-3">
+          <p className="text-gray-500 text-sm">No insight yet.</p>
+          <p className="text-xs text-gray-400">Click &apos;Run scan&apos; to generate your first one.</p>
+        </div>
       </div>
     )
   }

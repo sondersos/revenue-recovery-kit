@@ -29,7 +29,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/revenue_recovery
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5

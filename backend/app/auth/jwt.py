@@ -81,4 +81,11 @@ async def get_current_user(
     if not organization_id:
         organization_id = user_id
 
-    return CurrentUser(user_id=user_id, organization_id=organization_id, email=email)
+    current_user = CurrentUser(user_id=user_id, organization_id=organization_id, email=email)
+
+    # Propagate identifiers into ContextVars for structured logging
+    from app.observability.correlation import org_id as _org_id, user_id as _user_id
+    _org_id.set(current_user.organization_id)
+    _user_id.set(current_user.user_id)
+
+    return current_user

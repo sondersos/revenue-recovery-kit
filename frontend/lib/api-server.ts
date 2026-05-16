@@ -3,7 +3,7 @@
  * Gets the JWT from the server-side Supabase session.
  */
 import { createClient } from '@/lib/supabase/server'
-import type { Detection, DetectionRun, DetectionRunDetail, Insight } from './types'
+import type { CostSummary, Detection, DetectionRun, DetectionRunDetail, Insight } from './types'
 
 export class ApiError extends Error {
   constructor(
@@ -62,4 +62,12 @@ export async function getDetectionRunServer(id: string): Promise<DetectionRunDet
 export async function listDetectionsServer(runId: string): Promise<Detection[]> {
   const result = await serverFetch<Detection[]>(`/v1/detection/runs/${runId}/detections`)
   return result ?? []
+}
+
+export async function getCostSummaryServer(): Promise<CostSummary | null> {
+  try {
+    return await serverFetch<CostSummary>('/v1/insights/cost-summary')
+  } catch {
+    return null
+  }
 }

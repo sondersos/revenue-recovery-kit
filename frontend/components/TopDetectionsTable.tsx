@@ -26,7 +26,10 @@ export default function TopDetectionsTable({ detections }: Props) {
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
           Top detections
         </h3>
-        <p className="text-sm text-gray-400 italic">No detections to display.</p>
+        <div className="p-8 text-center text-sm text-gray-500">
+          <p>No detections from the last scan. Your book is clean.</p>
+          <p className="mt-1 text-xs text-gray-400">Run again with a longer window for a broader search.</p>
+        </div>
       </div>
     )
   }

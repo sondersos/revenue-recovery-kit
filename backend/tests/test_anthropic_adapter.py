@@ -133,4 +133,12 @@ async def test_adapter_does_not_log_api_key_or_full_user(caplog):
     full_log = " ".join(caplog.messages)
     assert "super-secret-key-12345" not in full_log
     assert "user input" not in full_log
-    assert "tokens_in" in full_log
+    # New structured logging uses event names; verify both events are emitted
+    assert "claude.request" in full_log
+    assert "claude.response" in full_log
+    # Verify token counts appear on the records' extra attributes
+    response_records = [r for r in caplog.records if r.getMessage() == "claude.response"]
+    assert response_records, "Expected at least one claude.response log record"
+    record = response_records[0]
+    assert hasattr(record, "claude_input_tokens")
+    assert hasattr(record, "claude_output_tokens")

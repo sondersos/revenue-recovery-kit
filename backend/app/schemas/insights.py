@@ -22,3 +22,11 @@ class InsightResponse(BaseModel):
     generated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CostSummary(BaseModel):
+    total_cost_usd: float
+    generation_count: int
+    avg_cost_usd: float
+    since: datetime | None
+    by_model: dict[str, float]

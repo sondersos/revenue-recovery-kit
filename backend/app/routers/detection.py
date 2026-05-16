@@ -5,12 +5,13 @@ import uuid
 from collections import defaultdict
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.jwt import CurrentUser, get_current_user
 from app.core.database import get_db
+from app.middleware.rate_limit import limiter
 from app.models.detection import Detection, DetectionRun
 from app.schemas.detection import (
     DetectionItem,
@@ -24,7 +25,9 @@ router = APIRouter(prefix="/v1/detection", tags=["detection"])
 
 
 @router.post("/run", response_model=DetectionSummary)
+@limiter.limit("60/minute")
 async def trigger_detection_run(
+    request: Request,
     body: RunDetectionRequest,
     session: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),

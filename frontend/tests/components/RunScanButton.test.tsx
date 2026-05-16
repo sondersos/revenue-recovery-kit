@@ -13,6 +13,14 @@ vi.mock('@/lib/api', () => ({
   generateInsight: vi.fn(),
 }))
 
+// Mock sonner so toast calls don't throw in tests
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 import * as api from '@/lib/api'
 
 beforeEach(() => {
@@ -83,11 +91,14 @@ describe('RunScanButton', () => {
     })
   })
 
-  it('shows error message when runDetection fails', async () => {
+  it('calls toast.error when runDetection fails', async () => {
+    const { toast } = await import('sonner')
     vi.mocked(api.runDetection).mockRejectedValue(new Error('API unavailable'))
     render(<RunScanButton />)
     fireEvent.click(screen.getByRole('button'))
-    expect(await screen.findByRole('alert')).toHaveTextContent('API unavailable')
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('API unavailable')
+    })
   })
 
   it('button returns to idle and is enabled after error', async () => {
@@ -95,8 +106,9 @@ describe('RunScanButton', () => {
     render(<RunScanButton />)
     const btn = screen.getByRole('button')
     fireEvent.click(btn)
-    await screen.findByRole('alert')
-    expect(btn).not.toBeDisabled()
+    await waitFor(() => {
+      expect(btn).not.toBeDisabled()
+    })
     expect(btn).toHaveTextContent('Run scan')
   })
 

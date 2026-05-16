@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { runDetection, generateInsight } from '@/lib/api'
 
 type Phase = 'idle' | 'scanning' | 'insight' | 'error'
@@ -9,21 +10,19 @@ type Phase = 'idle' | 'scanning' | 'insight' | 'error'
 export default function RunScanButton() {
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('idle')
-  const [error, setError] = useState<string | null>(null)
 
   async function handleClick() {
     setPhase('scanning')
-    setError(null)
 
     try {
       const run = await runDetection()
       setPhase('insight')
-      await generateInsight(run.detection_run_id)
+      const insight = await generateInsight(run.detection_run_id)
       setPhase('idle')
+      toast.success(`Insight generated · $${insight.cost_usd?.toFixed(3) ?? '0.000'}`)
       router.refresh()
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Unknown error'
-      setError(msg)
+      toast.error(err instanceof Error ? err.message : 'Scan failed')
       setPhase('error')
     }
   }
@@ -48,11 +47,6 @@ export default function RunScanButton() {
         )}
         {label}
       </button>
-      {phase === 'error' && error && (
-        <p role="alert" className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-          {error}
-        </p>
-      )}
     </div>
   )
 }

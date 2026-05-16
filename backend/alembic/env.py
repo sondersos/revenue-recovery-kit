@@ -87,6 +87,9 @@ def run_migrations_online() -> None:
             # Honour per-migration transactional_ddl = False declarations so
             # that CREATE INDEX CONCURRENTLY can run outside a transaction.
             transaction_per_migration=True,
+            # Indexes are managed via explicit migrations (0006+), not via
+            # autogenerate — skip them in alembic check comparisons.
+            include_object=lambda obj, name, type_, reflected, compare_to: type_ != "index",
         )
 
         with context.begin_transaction():

@@ -5,6 +5,7 @@ import KpiRow from '@/components/KpiRow'
 import RunScanButton from '@/components/RunScanButton'
 import DetectionsByRuleChart from '@/components/DetectionsByRuleChart'
 import TopDetectionsTable from '@/components/TopDetectionsTable'
+import { CostPill } from '@/components/CostPill'
 import LogoutButton from './LogoutButton'
 import {
   getLatestInsightServer,
@@ -60,6 +61,9 @@ export default async function DashboardPage() {
         {/* Table */}
         <TopDetectionsTable detections={detections} />
       </div>
+      <footer className="mt-8 flex justify-end px-4 pb-4">
+        <CostPill />
+      </footer>
     </main>
   )
 }

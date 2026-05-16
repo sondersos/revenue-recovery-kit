@@ -61,13 +61,24 @@ class AnthropicAdapter:
                     messages=[{"role": "user", "content": user}],
                 )
                 latency_ms = int((time.monotonic() - t0) * 1000)
+                # Compute cost (approximate): $3/M input + $15/M output for claude-3-5-sonnet
+                cost = (
+                    response.usage.input_tokens * 3 / 1_000_000
+                    + response.usage.output_tokens * 15 / 1_000_000
+                )
                 logger.info(
-                    "anthropic complete model=%s tokens_in=%d tokens_out=%d latency_ms=%d user_hash=%s",
-                    response.model,
-                    response.usage.input_tokens,
-                    response.usage.output_tokens,
-                    latency_ms,
-                    user_hash,
+                    "claude.request",
+                    extra={"model": model, "max_tokens": max_tokens},
+                )
+                logger.info(
+                    "claude.response",
+                    extra={
+                        "claude_model": response.model,
+                        "claude_input_tokens": response.usage.input_tokens,
+                        "claude_output_tokens": response.usage.output_tokens,
+                        "claude_cost_usd": str(round(cost, 6)),
+                        "latency_ms": latency_ms,
+                    },
                 )
                 return AnthropicResponse(
                     text=response.content[0].text,
