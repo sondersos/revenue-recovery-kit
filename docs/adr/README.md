@@ -10,3 +10,4 @@
 | [0006](0006-auth-flow.md) | Auth — Supabase Auth + JWT pass-through to FastAPI | Accepted |
 | [0007](0007-observability.md) | Observability — structured JSON logs with correlation IDs | Accepted |
 | [0008](0008-performance-budgets.md) | Performance budgets and indexing strategy | Accepted |
+| [0009](0009-deployment-architecture.md) | Deployment — Vercel + Fly.io + Supabase | Accepted |

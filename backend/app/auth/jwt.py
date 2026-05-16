@@ -68,11 +68,17 @@ async def get_current_user(
         logger.debug("JWT verification failed: %s", exc)
         raise HTTPException(status_code=401, detail="invalid_or_missing_token") from exc
 
-    # Extract fields — Supabase puts org in app_metadata
+    # Extract fields — check app_metadata first (admin-controlled), then
+    # user_metadata as fallback (allows SQL-based setup during dev/demo).
     user_id = payload.get("sub", "")
     email = payload.get("email", "")
     app_metadata = payload.get("app_metadata") or {}
-    organization_id = app_metadata.get("organization_id", "")
+    user_metadata = payload.get("user_metadata") or {}
+    organization_id = (
+        app_metadata.get("organization_id")
+        or user_metadata.get("organization_id")
+        or ""
+    )
 
     if not user_id:
         raise HTTPException(status_code=401, detail="invalid_or_missing_token")
