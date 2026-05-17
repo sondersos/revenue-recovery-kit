@@ -1,13 +1,17 @@
 """
 Supabase JWT verification for FastAPI.
 
-Uses HS256 + SUPABASE_JWT_SECRET. Never logs the secret, the full token,
-or user PII beyond the user_id hash in debug mode.
+Uses ES256 + JWKS endpoint (asymmetric keys). The JWKS client is
+cached for 1 hour so key rotations are picked up automatically.
+Never logs the full token, the raw signing key, or user PII beyond
+the user_id hash in debug mode.
 """
 import logging
 from dataclasses import dataclass
+from functools import lru_cache
 
 import jwt as pyjwt
+from jwt import PyJWKClient
 from fastapi import Header, HTTPException
 
 from app.core.config import settings
@@ -22,30 +26,44 @@ class CurrentUser:
     email: str
 
 
+@lru_cache(maxsize=1)
+def _jwks_client() -> PyJWKClient:
+    """Return a module-level cached JWKS client. Keys refresh every hour."""
+    url = settings.SUPABASE_JWKS_URL
+    if not url:
+        raise ValueError("SUPABASE_JWKS_URL is not configured")
+    return PyJWKClient(url, cache_keys=True, lifespan=3600)
+
+
 def decode_supabase_jwt(token: str) -> dict:
     """
-    Verify a Supabase-issued JWT using HS256 + SUPABASE_JWT_SECRET.
+    Verify a Supabase-issued JWT using ES256 + JWKS.
     Raises ValueError on any verification failure.
     """
-    secret = settings.SUPABASE_JWT_SECRET
-    if not secret:
-        raise ValueError("SUPABASE_JWT_SECRET is not configured")
-
     try:
+        client = _jwks_client()
+        signing_key = client.get_signing_key_from_jwt(token).key
         payload = pyjwt.decode(
             token,
-            secret,
-            algorithms=["HS256"],
+            signing_key,
+            algorithms=["ES256"],
             audience="authenticated",
             options={"verify_exp": True},
+            leeway=10,
         )
         return payload
     except pyjwt.ExpiredSignatureError as exc:
         raise ValueError("Token has expired") from exc
     except pyjwt.InvalidAudienceError as exc:
         raise ValueError("Invalid token audience") from exc
+    except pyjwt.InvalidSignatureError as exc:
+        raise ValueError(f"InvalidSignature: {exc}") from exc
     except pyjwt.InvalidTokenError as exc:
         raise ValueError(f"Invalid token: {exc}") from exc
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError(f"JWT verification failed: {exc}") from exc
 
 
 async def get_current_user(

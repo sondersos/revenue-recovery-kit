@@ -26,17 +26,30 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from unittest.mock import MagicMock, patch
+from cryptography.hazmat.primitives.asymmetric.ec import generate_private_key, SECP256R1
+from cryptography.hazmat.backends import default_backend
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
 
 # ─────────────────────────────────────────────────────────────
-# Helpers
+# Helpers — EC keypair mirrors Supabase ES256 tokens
 # ─────────────────────────────────────────────────────────────
 
-TEST_SECRET = "test-jwt-secret-32-chars-exactly!!"
+_PRIVATE_KEY = generate_private_key(SECP256R1(), default_backend())
+_PUBLIC_KEY = _PRIVATE_KEY.public_key()
+
 TEST_ORG_ID = str(uuid.uuid4())
+
+
+def _mock_jwks_client():
+    signing_key = MagicMock()
+    signing_key.key = _PUBLIC_KEY
+    client = MagicMock()
+    client.get_signing_key_from_jwt.return_value = signing_key
+    return client
 
 
 def _make_token(org_id: str = TEST_ORG_ID) -> str:
@@ -47,7 +60,14 @@ def _make_token(org_id: str = TEST_ORG_ID) -> str:
         "exp": int(time.time()) + 3600,
         "app_metadata": {"organization_id": org_id},
     }
-    return pyjwt.encode(payload, TEST_SECRET, algorithm="HS256")
+    return pyjwt.encode(payload, _PRIVATE_KEY, algorithm="ES256")
+
+
+@pytest.fixture(autouse=True)
+def mock_jwt_verification():
+    """Patch JWKS client so all perf tests use the test EC keypair."""
+    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client()):
+        yield
 
 
 def _p95(samples: list[float]) -> float:

@@ -22,16 +22,20 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from unittest.mock import MagicMock, patch
+from cryptography.hazmat.primitives.asymmetric.ec import generate_private_key, SECP256R1
+from cryptography.hazmat.backends import default_backend
 
 from app.core.database import get_db
 from app.models.detection import DetectionRun, Insight
 from app.routers.insights import router as insights_router
 
 # ---------------------------------------------------------------------------
-# Constants
+# EC keypair for test JWT signing (mirrors Supabase ES256 tokens)
 # ---------------------------------------------------------------------------
 
-TEST_SECRET = "test-jwt-secret-32-chars-exactly!!"
+_PRIVATE_KEY = generate_private_key(SECP256R1(), default_backend())
+_PUBLIC_KEY = _PRIVATE_KEY.public_key()
 
 _RAW_DB_URL = os.environ.get(
     "DATABASE_URL",
@@ -47,6 +51,14 @@ _ASYNC_DB_URL = (
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _mock_jwks_client():
+    signing_key = MagicMock()
+    signing_key.key = _PUBLIC_KEY
+    client = MagicMock()
+    client.get_signing_key_from_jwt.return_value = signing_key
+    return client
+
+
 def _make_token(org_id: str) -> str:
     payload = {
         "sub": str(uuid.uuid4()),
@@ -56,7 +68,7 @@ def _make_token(org_id: str) -> str:
         "iat": int(time.time()),
         "app_metadata": {"organization_id": org_id},
     }
-    return pyjwt.encode(payload, TEST_SECRET, algorithm="HS256")
+    return pyjwt.encode(payload, _PRIVATE_KEY, algorithm="ES256")
 
 
 def _auth_header(org_id: str) -> dict[str, str]:
@@ -120,9 +132,7 @@ async def test_cost_summary_returns_zero_when_no_insights():
     factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
     app = _make_app(factory)
 
-    with patch("app.auth.jwt.settings") as mock_settings:
-        mock_settings.SUPABASE_JWT_SECRET = TEST_SECRET
-
+    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client()):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
@@ -156,9 +166,7 @@ async def test_cost_summary_aggregates_across_insights():
         await _seed_insight(session, org_id, Decimal("0.0070"), model="claude-b")
         await session.commit()
 
-    with patch("app.auth.jwt.settings") as mock_settings:
-        mock_settings.SUPABASE_JWT_SECRET = TEST_SECRET
-
+    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client()):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
@@ -194,9 +202,7 @@ async def test_cost_summary_excludes_other_orgs():
         await _seed_insight(session, org_b, Decimal("0.9999"))
         await session.commit()
 
-    with patch("app.auth.jwt.settings") as mock_settings:
-        mock_settings.SUPABASE_JWT_SECRET = TEST_SECRET
-
+    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client()):
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
