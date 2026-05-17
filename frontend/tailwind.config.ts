@@ -10,6 +10,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        forest: {
+          50: '#f0f7f4',
+          100: '#dceee6',
+          200: '#b8dece',
+          300: '#8ec9ae',
+          400: '#5eaf88',
+          500: '#3a9469',
+          600: '#2d7855',
+          700: '#235f44',
+          800: '#1a4733',
+          900: '#113025',
+          950: '#091a14',
+        },
+        lime: {
+          100: '#f7fee7',
+          200: '#ecfccb',
+          300: '#d9f99d',
+          400: '#bef264',
+          500: '#a3e635',
+        },
         tremor: {
           brand: {
             faint: '#eff6ff',
@@ -35,6 +55,10 @@ const config: Config = {
             inverted: '#ffffff',
           },
         },
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui'],
+        serif: ['var(--font-instrument-serif)', 'ui-serif', 'Georgia'],
       },
     },
   },

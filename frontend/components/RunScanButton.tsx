@@ -32,21 +32,25 @@ export default function RunScanButton() {
     phase === 'insight'  ? 'Generating insight…' :
     'Run scan'
 
+  const busy = phase === 'scanning' || phase === 'insight'
+
   return (
-    <div className="flex flex-col items-start gap-2 mb-6">
-      <button
-        onClick={handleClick}
-        disabled={phase === 'scanning' || phase === 'insight'}
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm"
-      >
-        {(phase === 'scanning' || phase === 'insight') && (
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-          </svg>
-        )}
-        {label}
-      </button>
-    </div>
+    <button
+      onClick={handleClick}
+      disabled={busy}
+      className="inline-flex items-center gap-2 px-4 py-2 bg-forest-700 text-white rounded-lg text-sm font-medium hover:bg-forest-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+    >
+      {busy ? (
+        <svg className="animate-spin h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      ) : (
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+        </svg>
+      )}
+      {label}
+    </button>
   )
 }

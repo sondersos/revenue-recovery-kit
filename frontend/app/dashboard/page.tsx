@@ -7,6 +7,7 @@ import DetectionsByRuleChart from '@/components/DetectionsByRuleChart'
 import TopDetectionsTable from '@/components/TopDetectionsTable'
 import { CostPill } from '@/components/CostPill'
 import LogoutButton from './LogoutButton'
+import Sidebar from '@/components/Sidebar'
 import {
   getLatestInsightServer,
   getLatestDetectionRunServer,
@@ -30,40 +31,43 @@ export default async function DashboardPage() {
     : []
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen flex bg-gray-50">
+      <Sidebar email={user.email ?? ''} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between shrink-0">
           <div>
-            <h1 className="text-lg font-bold text-gray-900">Revenue Recovery Kit</h1>
-            <p className="text-xs text-gray-400">Automated recovery dashboard</p>
+            <h1 className="text-sm font-semibold text-gray-900">Dashboard</h1>
+            <p className="text-xs text-gray-400">Revenue recovery overview</p>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500 hidden sm:block">{user.email}</span>
+          <div className="flex items-center gap-3">
+            <RunScanButton />
             <LogoutButton />
           </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Latest Claude insight */}
-        <InsightCard insight={insight} />
+        {/* Page content */}
+        <main className="flex-1 px-8 py-8 overflow-auto">
+          <div className="mb-8">
+            <h2 className="font-serif text-3xl text-gray-900 mb-1">
+              Welcome back
+            </h2>
+            <p className="text-sm text-gray-500">
+              Here&apos;s what we found in your latest scan.
+            </p>
+          </div>
 
-        {/* KPI metrics */}
-        <KpiRow run={latestRun} detections={detections} />
+          <KpiRow run={latestRun} detections={detections} />
+          <InsightCard insight={insight} />
+          <DetectionsByRuleChart detections={detections} />
+          <TopDetectionsTable detections={detections} />
+        </main>
 
-        {/* Run scan */}
-        <RunScanButton />
-
-        {/* Chart */}
-        <DetectionsByRuleChart detections={detections} />
-
-        {/* Table */}
-        <TopDetectionsTable detections={detections} />
+        <footer className="px-8 py-4 flex justify-end border-t border-gray-100 bg-white">
+          <CostPill />
+        </footer>
       </div>
-      <footer className="mt-8 flex justify-end px-4 pb-4">
-        <CostPill />
-      </footer>
-    </main>
+    </div>
   )
 }
