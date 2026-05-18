@@ -10,7 +10,6 @@ import logging
 import sys
 import pathlib
 
-import pytest
 
 # Ensure backend/ is on sys.path (mirrors conftest.py)
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))

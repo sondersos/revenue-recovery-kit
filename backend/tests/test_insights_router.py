@@ -13,7 +13,6 @@ from __future__ import annotations
 import os
 import time
 import uuid
-from contextlib import asynccontextmanager
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -22,7 +21,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from cryptography.hazmat.primitives.asymmetric.ec import generate_private_key, SECP256R1
 from cryptography.hazmat.backends import default_backend
 

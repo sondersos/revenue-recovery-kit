@@ -13,7 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.integrations.anthropic.client import AnthropicAdapter, AnthropicError
+from app.integrations.anthropic.client import AnthropicAdapter
 from app.models.detection import Detection, DetectionRun, Insight
 from app.services.insights.prompts import SYSTEM_PROMPT
 

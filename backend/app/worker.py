@@ -8,7 +8,7 @@ email / SMS messages via the relevant integration clients.
 import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 import sqlalchemy as sa
 from app.models.contact import Contact

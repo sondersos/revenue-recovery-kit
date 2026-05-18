@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import logging
 import time
 
@@ -45,7 +44,6 @@ class AnthropicAdapter:
         Logs: model, latency_ms, token counts, and a hash of the first 64 chars of user.
         Never logs: api_key, full system prompt, full user message.
         """
-        user_hash = hashlib.sha256(user[:64].encode()).hexdigest()[:12]
         last_exc: Exception | None = None
 
         for attempt, backoff in enumerate([0] + self._BACKOFF):

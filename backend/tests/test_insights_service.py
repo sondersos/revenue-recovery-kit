@@ -4,11 +4,9 @@ Mocks session and AnthropicAdapter; no real I/O.
 """
 from __future__ import annotations
 
-import json
 import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
-from typing import Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

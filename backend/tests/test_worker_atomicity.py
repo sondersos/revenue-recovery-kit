@@ -105,7 +105,7 @@ async def test_worker_marks_step_sent_on_success():
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
         patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as mock_sms,
+        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as _mock_sms,
     ):
         mock_due.return_value = [step]
         mock_email.return_value = {"id": "email-id-001"}
@@ -143,7 +143,7 @@ async def test_worker_marks_step_failed_on_send_error():
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
         patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as mock_sms,
+        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as _mock_sms,
     ):
         mock_due.return_value = [step]
         mock_email.side_effect = RuntimeError("send failed")

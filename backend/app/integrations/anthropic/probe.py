@@ -1,6 +1,5 @@
 import asyncio
 import socket
-import os
 
 
 async def probe_anthropic(timeout_s: float = 2.0) -> None:

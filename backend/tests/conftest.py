@@ -3,7 +3,6 @@ Shared pytest configuration for the revenue-recovery-kit test suite.
 """
 import sys
 import pathlib
-import pytest
 
 # Insert backend/ (one level up from this file) onto sys.path.
 # In the container: /app. On the host: .../revenue-recovery-kit/backend/.

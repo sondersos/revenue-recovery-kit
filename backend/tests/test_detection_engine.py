@@ -2,8 +2,6 @@
 Unit tests for the detection engine — run_detection(), transaction discipline.
 """
 import uuid
-from datetime import datetime, timezone
-from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -100,7 +98,7 @@ async def test_engine_assigns_detection_run_id_to_each_detection():
     session.flush.side_effect = flush_side_effect
 
     with patch("app.services.detection.engine.REGISTRY", [rule]):
-        run = await run_detection(session, ORG_ID)
+        await run_detection(session, ORG_ID)
 
     assert det.detection_run_id == run_id
 
