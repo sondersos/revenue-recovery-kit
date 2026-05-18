@@ -34,11 +34,17 @@ async function serverFetch<T>(path: string, options: RequestInit = {}): Promise<
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${base}${path}`, {
-    ...options,
-    headers,
-    cache: 'no-store',
-  })
+  let res: Response
+  try {
+    res = await fetch(`${base}${path}`, {
+      ...options,
+      headers,
+      cache: 'no-store',
+    })
+  } catch {
+    // Network error (API not reachable) — render empty state instead of crashing
+    return null
+  }
 
   if (res.status === 204) return null
   if (res.status === 401) return null
