@@ -1,6 +1,7 @@
 """
 Insights router — commit() lives here, never inside services.
 """
+
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -60,7 +61,9 @@ async def create_insight(
         await session.commit()
     except SQLAlchemyError as exc:
         await session.rollback()
-        raise HTTPException(status_code=503, detail="Database error — please retry") from exc
+        raise HTTPException(
+            status_code=503, detail="Database error — please retry"
+        ) from exc
 
     await session.refresh(insight)
     return InsightResponse.model_validate(insight)
@@ -90,10 +93,7 @@ async def cost_summary(
         .where(Insight.organization_id == org_id)
         .group_by(Insight.model)
     )
-    by_model = {
-        model: float(cost or 0)
-        for model, cost in model_result.all()
-    }
+    by_model = {model: float(cost or 0) for model, cost in model_result.all()}
 
     avg = float(total_cost) / count if count > 0 else 0.0
 

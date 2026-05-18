@@ -15,6 +15,7 @@ Budgets (p95, Docker in-process test client):
   POST /v1/detection/run          < 1200ms (real server p95 ≈ 8ms with indexes)
   GET /v1/insights/cost-summary   < 100ms
 """
+
 from __future__ import annotations
 
 import statistics
@@ -78,6 +79,7 @@ def _p95(samples: list[float]) -> float:
 # Fixture: override DB to use asyncpg URL
 # ─────────────────────────────────────────────────────────────
 
+
 @pytest.fixture()
 async def db_session():
     engine = create_async_engine(settings.DATABASE_URL, echo=False)
@@ -103,6 +105,7 @@ async def client(db_session):
 # ─────────────────────────────────────────────────────────────
 # Tests
 # ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.perf
 @pytest.mark.asyncio
@@ -187,7 +190,9 @@ async def test_detection_run_empty_db_under_500ms(client: AsyncClient):
         samples.append(elapsed_ms)
 
     p95 = _p95(samples)
-    assert p95 < 1200, f"p95 latency {p95:.1f}ms exceeds 1200ms budget (Docker in-process overhead)"
+    assert (
+        p95 < 1200
+    ), f"p95 latency {p95:.1f}ms exceeds 1200ms budget (Docker in-process overhead)"
 
 
 @pytest.mark.perf

@@ -5,6 +5,7 @@ Uses respx to intercept httpx calls — no real HTTP is made.
 The placeholder TWILIO_ACCOUNT_SID "ACtest000" is patched into settings
 before any URL is constructed.
 """
+
 import pytest
 import httpx
 import respx
@@ -37,6 +38,7 @@ def _patch_settings():
 # Tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 @respx.mock
@@ -46,7 +48,9 @@ async def test_send_recovery_sms_happy_path_returns_sid():
     1 HTTP call to the Twilio Messages endpoint.
     """
     respx.post(_TWILIO_URL).mock(
-        return_value=httpx.Response(200, json={"sid": "SM_test_001", "status": "queued"})
+        return_value=httpx.Response(
+            200, json={"sid": "SM_test_001", "status": "queued"}
+        )
     )
 
     with _patch_settings():
@@ -90,9 +94,7 @@ async def test_send_recovery_sms_raises_after_exhausted_retries():
     When the endpoint always returns 500, send_recovery_sms must raise
     RuntimeError after exactly 4 HTTP calls (attempt 0 + 3 retries).
     """
-    respx.post(_TWILIO_URL).mock(
-        return_value=httpx.Response(500)
-    )
+    respx.post(_TWILIO_URL).mock(return_value=httpx.Response(500))
 
     with _patch_settings():
         with patch("integrations.twilio.client.asyncio.sleep", return_value=None):

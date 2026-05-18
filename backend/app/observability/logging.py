@@ -5,6 +5,7 @@ Attaches a JSON handler to the root logger and injects per-request context
 (correlation_id, org_id, user_id, route) via a logging.Filter that reads
 from ContextVars set by RequestContextMiddleware and the JWT dependency.
 """
+
 from __future__ import annotations
 
 import logging
@@ -58,14 +59,10 @@ def configure_logging(level: str = "INFO") -> None:
 
     # Avoid adding duplicate handlers on reload / test re-import
     for handler in root.handlers:
-        if isinstance(handler, logging.StreamHandler) and hasattr(
-            handler, "_rrk_json"
-        ):
+        if isinstance(handler, logging.StreamHandler) and hasattr(handler, "_rrk_json"):
             return
 
-    formatter = _UTCTimestampFormatter(
-        fmt="%(timestamp)s %(level)s %(message)s"
-    )
+    formatter = _UTCTimestampFormatter(fmt="%(timestamp)s %(level)s %(message)s")
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)

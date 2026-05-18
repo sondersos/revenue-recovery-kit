@@ -4,6 +4,7 @@ Tests for structured logging / correlation-ID propagation.
 Uses FastAPI TestClient (synchronous WSGI adapter over ASGI) so no event-loop
 fixtures are needed here.
 """
+
 from __future__ import annotations
 
 import logging
@@ -24,6 +25,7 @@ from app.middleware.request_context import RequestContextMiddleware
 # ---------------------------------------------------------------------------
 # Minimal test app — avoids pulling in DB / scheduler / third-party secrets
 # ---------------------------------------------------------------------------
+
 
 def _make_test_app() -> FastAPI:
     configure_logging()
@@ -63,31 +65,28 @@ def test_correlation_id_present_in_all_logs(caplog):
     assert response.status_code == 200
 
     # Filter to records produced by our own code
-    our_records = [
-        r for r in caplog.records
-        if r.name.startswith("app.")
-    ]
+    our_records = [r for r in caplog.records if r.name.startswith("app.")]
 
-    assert len(our_records) >= 2, (
-        f"Expected at least request.start and request.end records, got: {our_records}"
-    )
+    assert (
+        len(our_records) >= 2
+    ), f"Expected at least request.start and request.end records, got: {our_records}"
 
     for record in our_records:
-        assert hasattr(record, "correlation_id"), (
-            f"Record '{record.message}' is missing correlation_id attribute"
-        )
-        assert record.correlation_id is not None, (
-            f"Record '{record.message}' has correlation_id=None"
-        )
+        assert hasattr(
+            record, "correlation_id"
+        ), f"Record '{record.message}' is missing correlation_id attribute"
+        assert (
+            record.correlation_id is not None
+        ), f"Record '{record.message}' has correlation_id=None"
 
 
 def test_correlation_id_echoed_in_response_header():
     """The middleware must echo X-Request-ID back in the response."""
     response = _client.get("/health")
     assert response.status_code == 200
-    assert "x-request-id" in response.headers, (
-        "Expected X-Request-ID header in response"
-    )
+    assert (
+        "x-request-id" in response.headers
+    ), "Expected X-Request-ID header in response"
     assert response.headers["x-request-id"], "X-Request-ID must not be empty"
 
 
@@ -117,12 +116,12 @@ def test_no_jwt_in_any_log_line(caplog):
 
     for record in caplog.records:
         # Check the formatted message
-        assert "Bearer " not in record.getMessage(), (
-            f"Found raw Bearer token in log message: {record.getMessage()!r}"
-        )
+        assert (
+            "Bearer " not in record.getMessage()
+        ), f"Found raw Bearer token in log message: {record.getMessage()!r}"
         # Check any extra attributes on the record
         for attr in vars(record).values():
             if isinstance(attr, str):
-                assert "Bearer " not in attr, (
-                    f"Found raw Bearer token in log record attribute: {attr!r}"
-                )
+                assert (
+                    "Bearer " not in attr
+                ), f"Found raw Bearer token in log record attribute: {attr!r}"

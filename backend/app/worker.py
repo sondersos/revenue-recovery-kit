@@ -28,14 +28,14 @@ async def execute_due_steps(sessionmaker: async_sessionmaker) -> None:
     # Lazy-import integration clients so the worker module itself always
     # imports cleanly even when the integration packages are not yet wired up.
     from integrations.resend.client import send_recovery_email  # type: ignore[import]
-    from integrations.twilio.client import send_recovery_sms    # type: ignore[import]
+    from integrations.twilio.client import send_recovery_sms  # type: ignore[import]
 
     async with sessionmaker() as session:
         due_steps = await get_due_steps(session)
 
         for step in due_steps:
             try:
-                async with session.begin_nested():   # savepoint per step
+                async with session.begin_nested():  # savepoint per step
                     result = await session.execute(
                         sa.select(Contact).where(Contact.id == step.contact_id)
                     )
@@ -74,7 +74,9 @@ async def execute_due_steps(sessionmaker: async_sessionmaker) -> None:
                         continue
 
                     await mark_step_sent(session, step.id)
-                    logger.info("sequence_id=%s channel=%s — sent", step.id, step.channel)
+                    logger.info(
+                        "sequence_id=%s channel=%s — sent", step.id, step.channel
+                    )
 
             except Exception:
                 logger.exception(
@@ -88,13 +90,17 @@ async def execute_due_steps(sessionmaker: async_sessionmaker) -> None:
                     async with session.begin_nested():
                         await mark_step_failed(session, step.id)
                 except Exception:
-                    logger.exception("sequence_id=%s — could not mark_step_failed", step.id)
+                    logger.exception(
+                        "sequence_id=%s — could not mark_step_failed", step.id
+                    )
 
         # Commit all savepoints to the database.
         try:
             await session.commit()
         except Exception:
-            logger.exception("worker: session.commit() failed — rolling back entire batch")
+            logger.exception(
+                "worker: session.commit() failed — rolling back entire batch"
+            )
             await session.rollback()
 
 
@@ -113,7 +119,7 @@ def create_scheduler(sessionmaker: async_sessionmaker) -> AsyncIOScheduler:
         args=[sessionmaker],
         id="execute_due_steps",
         replace_existing=True,
-        max_instances=1,     # prevent concurrent runs if a batch takes >60s
+        max_instances=1,  # prevent concurrent runs if a batch takes >60s
         misfire_grace_time=10,  # discard fires missed by more than 10s
     )
     return scheduler

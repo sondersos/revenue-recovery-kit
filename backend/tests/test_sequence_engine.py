@@ -3,6 +3,7 @@ Unit tests for app.services.sequence_engine.
 
 All tests use a mocked AsyncSession — no real database required.
 """
+
 import pytest
 from datetime import date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
@@ -19,6 +20,7 @@ from app.services.sequence_engine import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_session() -> AsyncMock:
     """Return a minimal AsyncSession mock with execute, flush, and scalars wired up."""
@@ -67,6 +69,7 @@ def _make_invoice_failed() -> MagicMock:
 # pg_insert (all rows) and one SELECT.  The spec's assumption of one execute
 # per step does not match the implementation.  Tests below reflect actual
 # behaviour (2 calls each).
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -119,7 +122,7 @@ async def test_overdue_schedule_day_offsets_correct():
 
     # Steps 0, 1, 2 → email; step 3 → sms
     for i in range(3):
-        assert OVERDUE_SCHEDULE[i]["channel"] == "email", (
-            f"Step {i} should be 'email', got {OVERDUE_SCHEDULE[i]['channel']!r}"
-        )
+        assert (
+            OVERDUE_SCHEDULE[i]["channel"] == "email"
+        ), f"Step {i} should be 'email', got {OVERDUE_SCHEDULE[i]['channel']!r}"
     assert OVERDUE_SCHEDULE[3]["channel"] == "sms"

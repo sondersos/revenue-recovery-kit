@@ -25,30 +25,25 @@ _UPGRADE_SQLS = [
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_detection_runs_org_started "
     "ON detection_runs(organization_id, started_at DESC)",
-
     # Powers GET /v1/insights/latest — most-recent insight per org in O(log n).
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_insights_org_generated "
     "ON insights(organization_id, generated_at DESC)",
-
     # Powers /runs/{id}/detections listing sorted by amount (top-10 table).
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_detections_run_amount "
     "ON detections(detection_run_id, amount_usd DESC NULLS LAST)",
-
     # Powers org-scoped amount queries; partial index excludes NULL amounts.
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_detections_org_amount "
     "ON detections(organization_id, amount_usd DESC) "
     "WHERE amount_usd IS NOT NULL",
-
     # Powers stalled_invoice + recovery_candidate rules.
     # Partial index keeps it small by excluding already-paid invoices.
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_invoices_status_created "
     "ON invoices(status, created_at) "
     "WHERE status != 'paid'",
-
     # Powers stale_lead rule — contacts with no recent activity.
     "CREATE INDEX CONCURRENTLY IF NOT EXISTS "
     "idx_contacts_updated "

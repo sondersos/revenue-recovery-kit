@@ -1,6 +1,7 @@
 """
 Detection router — commit() lives here, never inside services.
 """
+
 import uuid
 from collections import defaultdict
 from decimal import Decimal
@@ -33,7 +34,11 @@ async def trigger_detection_run(
     current_user: CurrentUser = Depends(get_current_user),
 ) -> DetectionSummary:
     """Run all detection rules and persist the results."""
-    org_id = uuid.UUID(current_user.organization_id) if _is_valid_uuid(current_user.organization_id) else uuid.UUID("00000000-0000-0000-0000-000000000099")
+    org_id = (
+        uuid.UUID(current_user.organization_id)
+        if _is_valid_uuid(current_user.organization_id)
+        else uuid.UUID("00000000-0000-0000-0000-000000000099")
+    )
     try:
         run = await run_detection(session, org_id, body.window_days)
         await session.commit()
@@ -78,6 +83,7 @@ async def get_latest_detection_run(
     run = result.scalar_one_or_none()
     if run is None:
         from fastapi.responses import Response
+
         return Response(status_code=204)
 
     return {
@@ -122,7 +128,9 @@ async def get_detection_run(
                 severity=det.severity,
                 subject_type=det.subject_type,
                 subject_id=det.subject_id,
-                amount_usd=float(det.amount_usd) if det.amount_usd is not None else None,
+                amount_usd=(
+                    float(det.amount_usd) if det.amount_usd is not None else None
+                ),
                 days_outstanding=det.days_outstanding,
                 recommended_action=det.recommended_action,
             )

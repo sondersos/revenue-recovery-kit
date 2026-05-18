@@ -30,10 +30,14 @@ async def receive_webhook(
     received_sig = request.headers.get("X-GHL-Signature")
 
     if not secret or not received_sig:
-        raise HTTPException(status_code=401, detail="Missing or unconfigured webhook signature")
+        raise HTTPException(
+            status_code=401, detail="Missing or unconfigured webhook signature"
+        )
 
     # 3. Compute expected signature with timing-safe comparison.
-    expected_sig = hmac.new(key=secret.encode(), msg=body, digestmod=hashlib.sha256).hexdigest()
+    expected_sig = hmac.new(
+        key=secret.encode(), msg=body, digestmod=hashlib.sha256
+    ).hexdigest()
     if not hmac.compare_digest(expected_sig, received_sig):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
@@ -47,12 +51,18 @@ async def receive_webhook(
         if event_type == "contact.created":
             payload = ContactPayload.model_validate(envelope.data)
             await upsert_contact(session, payload)
-            logger.info("Processed contact.created for ghl_contact_id=%s", payload.ghl_contact_id)
+            logger.info(
+                "Processed contact.created for ghl_contact_id=%s",
+                payload.ghl_contact_id,
+            )
 
         elif event_type == "invoice.status_changed":
             payload = InvoicePayload.model_validate(envelope.data)
             await upsert_invoice(session, payload)
-            logger.info("Processed invoice.status_changed for ghl_invoice_id=%s", payload.ghl_invoice_id)
+            logger.info(
+                "Processed invoice.status_changed for ghl_invoice_id=%s",
+                payload.ghl_invoice_id,
+            )
 
         else:
             logger.info("Unknown GHL event type: %s", event_type)

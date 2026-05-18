@@ -4,6 +4,7 @@ Unit tests for JWT authentication — decode_supabase_jwt and get_current_user.
 Uses a generated EC P-256 keypair that mirrors what Supabase issues (ES256).
 The JWKS client is monkeypatched so tests never hit the real Supabase endpoint.
 """
+
 from __future__ import annotations
 
 import time
@@ -64,6 +65,7 @@ def _mock_jwks_client(public_key=_PUBLIC_KEY):
 # decode_supabase_jwt — positive cases
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_decode_valid_es256_token():
     token = _make_token()
@@ -86,6 +88,7 @@ def test_decode_extracts_app_metadata_org_id():
 # decode_supabase_jwt — negative cases
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 def test_decode_expired_token_raises():
     token = _make_token(exp_offset=-10)
@@ -99,7 +102,9 @@ def test_decode_wrong_signing_key_raises_invalid_signature():
     """Token signed with a different EC key must be rejected with InvalidSignature."""
     token = _make_token(private_key=_WRONG_PRIVATE_KEY)
     # JWKS client returns the correct PUBLIC key — signature will not match
-    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client(_PUBLIC_KEY)):
+    with patch(
+        "app.auth.jwt._jwks_client", return_value=_mock_jwks_client(_PUBLIC_KEY)
+    ):
         with pytest.raises(ValueError, match="InvalidSignature"):
             decode_supabase_jwt(token)
 
@@ -117,6 +122,7 @@ def test_decode_unconfigured_jwks_url_raises():
     """If SUPABASE_JWKS_URL is empty, _jwks_client raises ValueError."""
     # Clear the lru_cache so the unconfigured setting is exercised
     from app.auth.jwt import _jwks_client
+
     _jwks_client.cache_clear()
     with patch("app.auth.jwt.settings") as mock_settings:
         mock_settings.SUPABASE_JWKS_URL = ""
@@ -130,6 +136,7 @@ def test_decode_unconfigured_jwks_url_raises():
 # ---------------------------------------------------------------------------
 # get_current_user — happy path
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -156,6 +163,7 @@ async def test_get_current_user_falls_back_to_user_id_when_no_org():
 # ---------------------------------------------------------------------------
 # get_current_user — 401 cases
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -189,7 +197,9 @@ async def test_get_current_user_expired_token_raises_401():
 async def test_get_current_user_wrong_signing_key_raises_401():
     """Token signed by a different EC key must yield HTTP 401."""
     token = _make_token(private_key=_WRONG_PRIVATE_KEY)
-    with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client(_PUBLIC_KEY)):
+    with patch(
+        "app.auth.jwt._jwks_client", return_value=_mock_jwks_client(_PUBLIC_KEY)
+    ):
         with pytest.raises(HTTPException) as exc_info:
             await get_current_user(authorization=f"Bearer {token}")
     assert exc_info.value.status_code == 401

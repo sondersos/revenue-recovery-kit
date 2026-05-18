@@ -2,6 +2,7 @@
 Unit tests for the insights service — generate_insight().
 Mocks session and AnthropicAdapter; no real I/O.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -147,7 +148,9 @@ async def test_generate_insight_computes_cost():
         insight = await generate_insight(session, RUN_ID)
 
     # 120 input tokens @ $3/M + 80 output tokens @ $15/M
-    expected = Decimal("120") / 1_000_000 * Decimal("3.00") + Decimal("80") / 1_000_000 * Decimal("15.00")
+    expected = Decimal("120") / 1_000_000 * Decimal("3.00") + Decimal(
+        "80"
+    ) / 1_000_000 * Decimal("15.00")
     assert insight.cost_usd == expected.quantize(Decimal("0.0001"))
 
 
@@ -190,6 +193,7 @@ async def test_generate_insight_passes_model_from_settings():
 # ---------------------------------------------------------------------------
 # _compute_cost helper
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_compute_cost_zero_tokens():

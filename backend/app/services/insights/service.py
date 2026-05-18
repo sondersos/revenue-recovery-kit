@@ -4,6 +4,7 @@ Insights service — generate a Claude prose summary for a completed DetectionRu
 Transaction discipline: this module NEVER calls session.commit().
 The caller (router layer) is responsible for committing.
 """
+
 import json
 import uuid
 from collections import defaultdict
@@ -49,7 +50,9 @@ async def generate_insight(
     if run is None:
         raise ValueError(f"DetectionRun {detection_run_id} not found")
     if run.status != "complete":
-        raise ValueError(f"DetectionRun {detection_run_id} status={run.status!r}, expected 'complete'")
+        raise ValueError(
+            f"DetectionRun {detection_run_id} status={run.status!r}, expected 'complete'"
+        )
 
     # 2. Load its detections
     det_result = await session.execute(

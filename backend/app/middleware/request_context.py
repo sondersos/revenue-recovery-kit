@@ -2,6 +2,7 @@
 ASGI middleware that stamps every HTTP request with a correlation ID,
 populates ContextVars, and emits structured request start/end log lines.
 """
+
 from __future__ import annotations
 
 import logging
@@ -63,9 +64,7 @@ class RequestContextMiddleware:
                 existing_headers: list[tuple[bytes, bytes]] = list(
                     message.get("headers", [])
                 )
-                existing_headers.append(
-                    (b"x-request-id", request_id.encode())
-                )
+                existing_headers.append((b"x-request-id", request_id.encode()))
                 message = {**message, "headers": existing_headers}
             await send(message)
 

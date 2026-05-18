@@ -2,6 +2,7 @@
 Unit tests for detection rules — each rule's find() method.
 Sessions are mocked; no real database I/O.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -66,6 +67,7 @@ def _contact(
 # stalled_invoice_rule
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_stalled_invoice_finds_overdue_invoices():
@@ -106,6 +108,7 @@ async def test_stalled_invoice_detection_run_id_is_none():
 # stale_lead_rule
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_stale_lead_finds_contacts_without_invoice():
@@ -135,6 +138,7 @@ async def test_stale_lead_returns_empty_when_no_rows():
 # recovery_candidate_rule
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_recovery_candidate_finds_31_day_unpaid_invoice():
@@ -163,6 +167,7 @@ async def test_recovery_candidate_recommended_action_mentions_enqueue():
 # ---------------------------------------------------------------------------
 # sequence_eligible_rule
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio

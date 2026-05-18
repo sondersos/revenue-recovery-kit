@@ -3,6 +3,7 @@ Unit tests for integrations.resend.client.send_recovery_email.
 
 Uses respx to intercept httpx calls — no real HTTP is made.
 """
+
 import pytest
 import httpx
 import respx
@@ -24,6 +25,7 @@ _RESEND_URL = "https://api.resend.com/emails"
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 @pytest.mark.asyncio
@@ -77,9 +79,7 @@ async def test_send_recovery_email_raises_after_exhausted_retries():
     When the endpoint always returns 500, send_recovery_email must raise
     RuntimeError after exactly 4 HTTP calls (attempt 0 + 3 retries).
     """
-    respx.post(_RESEND_URL).mock(
-        return_value=httpx.Response(500)
-    )
+    respx.post(_RESEND_URL).mock(return_value=httpx.Response(500))
 
     with patch("integrations.resend.client.asyncio.sleep", return_value=None):
         with pytest.raises(RuntimeError, match="Resend failed after 3 retries"):

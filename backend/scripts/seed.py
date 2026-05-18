@@ -45,12 +45,14 @@ async def seed(org_id: str, clear: bool = False) -> None:
         if clear:
             print("Clearing existing data for org…")
             from sqlalchemy import delete
+
             await session.execute(
                 delete(Invoice).where(
                     Invoice.contact_id.in_(
-                        __import__("sqlalchemy").select(Contact.id).where(
-                            Contact.organization_id == org_id
-                        ).scalar_subquery()
+                        __import__("sqlalchemy")
+                        .select(Contact.id)
+                        .where(Contact.organization_id == org_id)
+                        .scalar_subquery()
                     )
                 )
             )

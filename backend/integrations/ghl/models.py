@@ -3,6 +3,7 @@
 Kept in a separate module so that dedup.py can import just the models
 without pulling in FastAPI routing or database dependencies.
 """
+
 from typing import Optional
 
 from pydantic import BaseModel

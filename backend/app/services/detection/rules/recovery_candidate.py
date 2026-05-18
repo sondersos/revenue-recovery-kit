@@ -4,6 +4,7 @@ Rule: recovery_candidate — Severity: HIGH
 Invoice > 30 days unpaid (status != 'paid', created_at < now() - 30 days),
 contact not in an active sequence (no sequence row with status='pending').
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

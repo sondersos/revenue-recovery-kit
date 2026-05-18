@@ -3,6 +3,7 @@ POST /v1/client-errors — receive frontend error reports and emit structured lo
 
 Stacks are intentionally omitted from logs (too noisy for network timeouts).
 """
+
 import logging
 
 from fastapi import APIRouter, Request, Response
@@ -23,7 +24,9 @@ class ClientErrorPayload(BaseModel):
 
 @router.post("/client-errors")
 @limiter.limit("5/minute")
-async def report_client_error(request: Request, payload: ClientErrorPayload) -> Response:
+async def report_client_error(
+    request: Request, payload: ClientErrorPayload
+) -> Response:
     logger.warning(
         "client.error",
         extra={

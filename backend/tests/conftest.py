@@ -1,6 +1,7 @@
 """
 Shared pytest configuration for the revenue-recovery-kit test suite.
 """
+
 import sys
 import pathlib
 

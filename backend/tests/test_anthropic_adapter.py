@@ -1,13 +1,24 @@
 """Unit tests for AnthropicAdapter — retry logic, sanitized logging, error handling."""
+
 import pytest
 import httpx
 from unittest.mock import AsyncMock, MagicMock, patch
 from anthropic import APIStatusError, APIConnectionError
 
-from app.integrations.anthropic.client import AnthropicAdapter, AnthropicError, AnthropicResponse
+from app.integrations.anthropic.client import (
+    AnthropicAdapter,
+    AnthropicError,
+    AnthropicResponse,
+)
 
 
-def _make_message(text="ok", input_tokens=10, output_tokens=20, model="claude-test", stop_reason="end_turn"):
+def _make_message(
+    text="ok",
+    input_tokens=10,
+    output_tokens=20,
+    model="claude-test",
+    stop_reason="end_turn",
+):
     msg = MagicMock()
     msg.content = [MagicMock(text=text)]
     msg.usage.input_tokens = input_tokens
@@ -49,7 +60,9 @@ async def test_adapter_success_returns_response():
     adapter = AnthropicAdapter(api_key="test-key")
     msg = _make_message(text="Great insight.", input_tokens=50, output_tokens=100)
 
-    with patch.object(adapter._client.messages, "create", new=AsyncMock(return_value=msg)):
+    with patch.object(
+        adapter._client.messages, "create", new=AsyncMock(return_value=msg)
+    ):
         result = await adapter.complete(**_CALL_KWARGS)
 
     assert isinstance(result, AnthropicResponse)
@@ -123,10 +136,13 @@ async def test_adapter_connection_error_retries_then_raises():
 async def test_adapter_does_not_log_api_key_or_full_user(caplog):
     """Sanitized logging: only hash of first 64 chars, never the raw key or message."""
     import logging
+
     adapter = AnthropicAdapter(api_key="super-secret-key-12345")
     msg = _make_message()
 
-    with patch.object(adapter._client.messages, "create", new=AsyncMock(return_value=msg)):
+    with patch.object(
+        adapter._client.messages, "create", new=AsyncMock(return_value=msg)
+    ):
         with caplog.at_level(logging.INFO, logger="app.integrations.anthropic.client"):
             await adapter.complete(**_CALL_KWARGS)
 
@@ -137,7 +153,9 @@ async def test_adapter_does_not_log_api_key_or_full_user(caplog):
     assert "claude.request" in full_log
     assert "claude.response" in full_log
     # Verify token counts appear on the records' extra attributes
-    response_records = [r for r in caplog.records if r.getMessage() == "claude.response"]
+    response_records = [
+        r for r in caplog.records if r.getMessage() == "claude.response"
+    ]
     assert response_records, "Expected at least one claude.response log record"
     record = response_records[0]
     assert hasattr(record, "claude_input_tokens")

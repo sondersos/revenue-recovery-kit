@@ -4,6 +4,7 @@ Rule: stale_lead — Severity: MEDIUM
 Contact created > 14 days ago, no invoice associated, no recent activity.
 Approximation: contact.updated_at < now() - 14 days AND no invoices FK to this contact.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -20,9 +21,7 @@ class StaleLeadRule(Rule):
         now = datetime.now(tz=timezone.utc)
         cutoff = now - timedelta(days=14)
 
-        has_invoice = exists(
-            select(Invoice.id).where(Invoice.contact_id == Contact.id)
-        )
+        has_invoice = exists(select(Invoice.id).where(Invoice.contact_id == Contact.id))
 
         stmt = select(Contact).where(
             Contact.updated_at < cutoff,

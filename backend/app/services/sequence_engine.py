@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 OVERDUE_SCHEDULE: list[dict] = [
-    {"step_index": 0, "day_offset": 3,  "channel": "email"},
-    {"step_index": 1, "day_offset": 7,  "channel": "email"},
+    {"step_index": 0, "day_offset": 3, "channel": "email"},
+    {"step_index": 1, "day_offset": 7, "channel": "email"},
     {"step_index": 2, "day_offset": 14, "channel": "email"},
     {"step_index": 3, "day_offset": 30, "channel": "sms"},
 ]
@@ -37,6 +37,7 @@ FAILED_PAYMENT_SCHEDULE: list[dict] = [
 # ---------------------------------------------------------------------------
 # Public functions
 # ---------------------------------------------------------------------------
+
 
 async def enqueue_overdue_sequence(
     session: AsyncSession,
@@ -56,7 +57,9 @@ async def enqueue_overdue_sequence(
 
     # invoice.due_date is a date; convert to timezone-aware datetime at midnight UTC.
     if invoice.due_date is None:
-        raise ValueError(f"Invoice {invoice.id} has no due_date — cannot schedule overdue sequence.")
+        raise ValueError(
+            f"Invoice {invoice.id} has no due_date — cannot schedule overdue sequence."
+        )
 
     base_dt = datetime(
         invoice.due_date.year,
@@ -81,19 +84,19 @@ async def enqueue_overdue_sequence(
     stmt = (
         pg_insert(Sequence)
         .values(rows)
-        .on_conflict_do_nothing(
-            constraint="uq_sequences_contact_type_step"
-        )
+        .on_conflict_do_nothing(constraint="uq_sequences_contact_type_step")
     )
     await session.execute(stmt)
     await session.flush()
 
     result = await session.execute(
-        sa.select(Sequence).where(
+        sa.select(Sequence)
+        .where(
             Sequence.contact_id == contact.id,
             Sequence.sequence_type == sequence_type,
             Sequence.invoice_id == invoice.id,
-        ).order_by(Sequence.step_index)
+        )
+        .order_by(Sequence.step_index)
     )
     return list(result.scalars().all())
 
@@ -132,19 +135,19 @@ async def enqueue_failed_payment_sequence(
     stmt = (
         pg_insert(Sequence)
         .values(rows)
-        .on_conflict_do_nothing(
-            constraint="uq_sequences_contact_type_step"
-        )
+        .on_conflict_do_nothing(constraint="uq_sequences_contact_type_step")
     )
     await session.execute(stmt)
     await session.flush()
 
     result = await session.execute(
-        sa.select(Sequence).where(
+        sa.select(Sequence)
+        .where(
             Sequence.contact_id == contact.id,
             Sequence.sequence_type == sequence_type,
             Sequence.invoice_id == invoice.id,
-        ).order_by(Sequence.step_index)
+        )
+        .order_by(Sequence.step_index)
     )
     return list(result.scalars().all())
 

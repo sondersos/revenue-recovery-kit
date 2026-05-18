@@ -4,6 +4,7 @@ Detection engine — iterates REGISTRY, collects Detection rows, bulk-inserts.
 Transaction discipline: this module NEVER calls session.commit().
 The caller (router layer) is responsible for committing or rolling back.
 """
+
 import uuid
 from datetime import datetime, timezone
 

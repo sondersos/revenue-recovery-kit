@@ -1,6 +1,7 @@
 """
 Tests for /health and /healthz endpoints.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,12 +13,14 @@ from fastapi.testclient import TestClient
 def _make_client() -> TestClient:
     """Import app fresh and return a synchronous TestClient."""
     from app.main import app
+
     return TestClient(app, raise_server_exceptions=False)
 
 
 # ---------------------------------------------------------------------------
 # /health — simple smoke test
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_health_ok():
@@ -30,6 +33,7 @@ def test_health_ok():
 # ---------------------------------------------------------------------------
 # /healthz — DB + Anthropic probes
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.unit
 def test_healthz_ok():

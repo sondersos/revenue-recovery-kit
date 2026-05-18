@@ -10,6 +10,7 @@ AND has no active (pending) sequence.
 This rule fires for contacts that match stalled_invoice OR stale_lead conditions
 and are not already in a pending sequence.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

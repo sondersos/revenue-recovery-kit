@@ -10,6 +10,7 @@ Verifies that:
 
 No real database or HTTP connections are used.
 """
+
 import uuid
 from typing import Optional
 import pytest
@@ -21,6 +22,7 @@ from app.worker import execute_due_steps
 # ---------------------------------------------------------------------------
 # Helper: build a consistent mock session
 # ---------------------------------------------------------------------------
+
 
 def make_mock_session() -> AsyncMock:
     """
@@ -37,7 +39,9 @@ def make_mock_session() -> AsyncMock:
     # begin_nested() must return an async context manager.
     nested_cm = MagicMock()
     nested_cm.__aenter__ = AsyncMock(return_value=None)
-    nested_cm.__aexit__ = AsyncMock(return_value=False)  # False → don't suppress exceptions
+    nested_cm.__aexit__ = AsyncMock(
+        return_value=False
+    )  # False → don't suppress exceptions
     session.begin_nested = MagicMock(return_value=nested_cm)
 
     return session
@@ -82,6 +86,7 @@ def _make_sessionmaker(session: AsyncMock):
 # Tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.unit
 @pytest.mark.asyncio
 async def test_worker_marks_step_sent_on_success():
@@ -104,8 +109,12 @@ async def test_worker_marks_step_sent_on_success():
         patch("app.worker.get_due_steps", new_callable=AsyncMock) as mock_due,
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
-        patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as _mock_sms,
+        patch(
+            "integrations.resend.client.send_recovery_email", new_callable=AsyncMock
+        ) as mock_email,
+        patch(
+            "integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock
+        ) as _mock_sms,
     ):
         mock_due.return_value = [step]
         mock_email.return_value = {"id": "email-id-001"}
@@ -142,8 +151,12 @@ async def test_worker_marks_step_failed_on_send_error():
         patch("app.worker.get_due_steps", new_callable=AsyncMock) as mock_due,
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
-        patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as _mock_sms,
+        patch(
+            "integrations.resend.client.send_recovery_email", new_callable=AsyncMock
+        ) as mock_email,
+        patch(
+            "integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock
+        ) as _mock_sms,
     ):
         mock_due.return_value = [step]
         mock_email.side_effect = RuntimeError("send failed")
@@ -186,8 +199,12 @@ async def test_worker_continues_after_one_step_fails():
         patch("app.worker.get_due_steps", new_callable=AsyncMock) as mock_due,
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
-        patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as mock_sms,
+        patch(
+            "integrations.resend.client.send_recovery_email", new_callable=AsyncMock
+        ) as mock_email,
+        patch(
+            "integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock
+        ) as mock_sms,
     ):
         mock_due.return_value = [step_a, step_b]
         mock_email.return_value = {"id": "email-id-001"}
@@ -221,8 +238,12 @@ async def test_worker_marks_failed_when_contact_missing():
         patch("app.worker.get_due_steps", new_callable=AsyncMock) as mock_due,
         patch("app.worker.mark_step_sent", new_callable=AsyncMock) as mock_sent,
         patch("app.worker.mark_step_failed", new_callable=AsyncMock) as mock_failed,
-        patch("integrations.resend.client.send_recovery_email", new_callable=AsyncMock) as mock_email,
-        patch("integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock) as mock_sms,
+        patch(
+            "integrations.resend.client.send_recovery_email", new_callable=AsyncMock
+        ) as mock_email,
+        patch(
+            "integrations.twilio.client.send_recovery_sms", new_callable=AsyncMock
+        ) as mock_sms,
     ):
         mock_due.return_value = [step]
 

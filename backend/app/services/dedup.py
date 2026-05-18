@@ -12,6 +12,7 @@ from integrations.ghl.models import ContactPayload, InvoicePayload
 # Helper — server-side now() expression
 # ---------------------------------------------------------------------------
 
+
 def sa_now():
     return _func.now()
 

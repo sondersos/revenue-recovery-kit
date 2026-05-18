@@ -8,6 +8,7 @@ from __future__ import annotations issue in client_errors.py.
 Engine and session factory are created fresh per test to avoid asyncio
 event-loop reuse issues with asyncpg.
 """
+
 from __future__ import annotations
 
 import os
@@ -40,15 +41,14 @@ _RAW_DB_URL = os.environ.get(
     "DATABASE_URL",
     "postgresql+psycopg://postgres:postgres@db:5432/revenue_recovery",
 )
-_ASYNC_DB_URL = (
-    _RAW_DB_URL
-    .replace("postgresql+psycopg://", "postgresql+asyncpg://")
-    .replace("postgresql://", "postgresql+asyncpg://")
-)
+_ASYNC_DB_URL = _RAW_DB_URL.replace(
+    "postgresql+psycopg://", "postgresql+asyncpg://"
+).replace("postgresql://", "postgresql+asyncpg://")
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _mock_jwks_client():
     signing_key = MagicMock()
@@ -122,13 +122,16 @@ async def _seed_insight(
 # Tests
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
 async def test_cost_summary_returns_zero_when_no_insights():
     """Org with no insights → all zeros, by_model empty."""
     org_id = str(uuid.uuid4())
 
     engine = create_async_engine(_ASYNC_DB_URL, echo=False)
-    factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    factory = async_sessionmaker(
+        bind=engine, class_=AsyncSession, expire_on_commit=False
+    )
     app = _make_app(factory)
 
     with patch("app.auth.jwt._jwks_client", return_value=_mock_jwks_client()):
@@ -157,7 +160,9 @@ async def test_cost_summary_aggregates_across_insights():
     org_id = uuid.uuid4()
 
     engine = create_async_engine(_ASYNC_DB_URL, echo=False)
-    factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    factory = async_sessionmaker(
+        bind=engine, class_=AsyncSession, expire_on_commit=False
+    )
     app = _make_app(factory)
 
     async with factory() as session:
@@ -193,7 +198,9 @@ async def test_cost_summary_excludes_other_orgs():
     org_b = uuid.uuid4()
 
     engine = create_async_engine(_ASYNC_DB_URL, echo=False)
-    factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    factory = async_sessionmaker(
+        bind=engine, class_=AsyncSession, expire_on_commit=False
+    )
     app = _make_app(factory)
 
     async with factory() as session:
@@ -222,7 +229,9 @@ async def test_cost_summary_excludes_other_orgs():
 async def test_cost_summary_requires_auth():
     """Missing JWT → 401."""
     engine = create_async_engine(_ASYNC_DB_URL, echo=False)
-    factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    factory = async_sessionmaker(
+        bind=engine, class_=AsyncSession, expire_on_commit=False
+    )
     app = _make_app(factory)
 
     async with AsyncClient(

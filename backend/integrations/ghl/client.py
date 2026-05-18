@@ -32,8 +32,12 @@ class GHLClient:
                 await asyncio.sleep(backoff)
             try:
                 response = await self._client.get(path)
-                logger.info("GHL GET /contacts/%s → %s", contact_id, response.status_code)
-                if response.status_code in _RETRY_STATUSES and attempt < len(_BACKOFF_SECONDS):
+                logger.info(
+                    "GHL GET /contacts/%s → %s", contact_id, response.status_code
+                )
+                if response.status_code in _RETRY_STATUSES and attempt < len(
+                    _BACKOFF_SECONDS
+                ):
                     last_exc = httpx.HTTPStatusError(
                         f"Retryable status {response.status_code}",
                         request=response.request,

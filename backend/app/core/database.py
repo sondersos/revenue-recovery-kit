@@ -7,8 +7,7 @@ from app.core.config import settings
 # Ensure the runtime URL uses the asyncpg driver.
 # asyncpg uses ?ssl=require; psycopg uses ?sslmode=require — normalise here.
 _async_url = (
-    settings.DATABASE_URL
-    .replace("postgresql+psycopg://", "postgresql+asyncpg://")
+    settings.DATABASE_URL.replace("postgresql+psycopg://", "postgresql+asyncpg://")
     .replace("postgresql://", "postgresql+asyncpg://")
     .replace("sslmode=require", "ssl=require")
 )

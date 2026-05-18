@@ -89,7 +89,8 @@ def run_migrations_online() -> None:
             transaction_per_migration=True,
             # Indexes are managed via explicit migrations (0006+), not via
             # autogenerate — skip them in alembic check comparisons.
-            include_object=lambda obj, name, type_, reflected, compare_to: type_ != "index",
+            include_object=lambda obj, name, type_, reflected, compare_to: type_
+            != "index",
         )
 
         with context.begin_transaction():

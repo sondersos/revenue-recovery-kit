@@ -5,6 +5,7 @@ Invoice issued > 7 days, status not 'paid', no activity logged in last 5 days.
 Approximation (no separate activity log yet): invoice.updated_at < now() - 5 days
 as a proxy for "no recent contact".
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

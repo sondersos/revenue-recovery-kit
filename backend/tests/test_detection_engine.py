@@ -1,6 +1,7 @@
 """
 Unit tests for the detection engine — run_detection(), transaction discipline.
 """
+
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 

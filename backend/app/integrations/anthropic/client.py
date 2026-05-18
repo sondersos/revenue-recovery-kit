@@ -89,14 +89,24 @@ class AnthropicAdapter:
                 last_exc = exc
                 status = exc.status_code
                 if status in self._RETRY_STATUSES and attempt < len(self._BACKOFF):
-                    logger.warning("anthropic attempt=%d status=%d — retrying", attempt, status)
+                    logger.warning(
+                        "anthropic attempt=%d status=%d — retrying", attempt, status
+                    )
                     continue
-                raise AnthropicError(f"Anthropic API error after {attempt+1} attempts: {status}") from exc
+                raise AnthropicError(
+                    f"Anthropic API error after {attempt+1} attempts: {status}"
+                ) from exc
             except APIConnectionError as exc:
                 last_exc = exc
                 if attempt < len(self._BACKOFF):
-                    logger.warning("anthropic attempt=%d connection error — retrying", attempt)
+                    logger.warning(
+                        "anthropic attempt=%d connection error — retrying", attempt
+                    )
                     continue
-                raise AnthropicError(f"Anthropic connection error after {attempt+1} attempts") from exc
+                raise AnthropicError(
+                    f"Anthropic connection error after {attempt+1} attempts"
+                ) from exc
 
-        raise AnthropicError(f"Anthropic failed after {len(self._BACKOFF)+1} attempts") from last_exc
+        raise AnthropicError(
+            f"Anthropic failed after {len(self._BACKOFF)+1} attempts"
+        ) from last_exc
